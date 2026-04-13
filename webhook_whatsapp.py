@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Form
 from fastapi.responses import Response
 from twilio.twiml.messaging_response import MessagingResponse
+from database import SessionLocal
+from models import Clinic
 
 router = APIRouter()
 
@@ -8,13 +10,15 @@ user_states = {}
 
 @router.post("/webhook-whatsapp")
 def webhook_whatsapp(Body: str = Form(...), From: str = Form(...)):
+    db = SessionLocal()
+    clinic = db.query(Clinic).filter(Clinic.id == 1).first()
+
     texto = Body.strip().lower()
     print(f"Mensagem recebida de {From}: {texto}")
 
-    # comandos de reinício
     if texto in ["oi", "olá", "ola", "menu", "inicio", "início", "começar", "comecar"]:
         user_states[From] = {"etapa": "inicio"}
-        resposta = "Olá! 😊 Sou o assistente da clínica. Você deseja agendar uma consulta ou saber valores?"
+        resposta = clinic.welcome_message if clinic and clinic.welcome_message else "Olá! 😊 Como posso ajudar?"
 
     else:
         estado = user_states.get(From, {}).get("etapa")
@@ -28,7 +32,7 @@ def webhook_whatsapp(Body: str = Form(...), From: str = Form(...)):
                 resposta = "Claro! Sobre qual tratamento você deseja saber o valor?"
             else:
                 user_states[From] = {"etapa": "inicio"}
-                resposta = "Olá! 😊 Posso te ajudar com agendamento de consulta ou valores. Digite 'consulta' ou 'valor'."
+                resposta = clinic.welcome_message if clinic and clinic.welcome_message else "Olá! 😊 Posso te ajudar com agendamento de consulta ou valores. Digite 'consulta' ou 'valor'."
 
         elif estado == "inicio":
             if "consulta" in texto or "agendar" in texto:
@@ -68,4 +72,5 @@ def webhook_whatsapp(Body: str = Form(...), From: str = Form(...)):
 
     twiml = MessagingResponse()
     twiml.message(resposta)
+    db.close()
     return Response(content=str(twiml), media_type="application/xml")
