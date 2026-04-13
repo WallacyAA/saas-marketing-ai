@@ -8,67 +8,64 @@ user_states = {}
 
 @router.post("/webhook-whatsapp")
 def webhook_whatsapp(Body: str = Form(...), From: str = Form(...)):
-    print(f"Mensagem de {From}: {Body}")
-
     texto = Body.strip().lower()
-    resposta = ""
+    print(f"Mensagem recebida de {From}: {texto}")
 
-    # reinicia a conversa sempre que o usuário disser oi/olá
-    if texto in ["oi", "olá", "ola", "menu", "início", "inicio"]:
+    # comandos de reinício
+    if texto in ["oi", "olá", "ola", "menu", "inicio", "início", "começar", "comecar"]:
         user_states[From] = {"etapa": "inicio"}
         resposta = "Olá! 😊 Sou o assistente da clínica. Você deseja agendar uma consulta ou saber valores?"
 
     else:
-        estado = user_states.get(From, {})
+        estado = user_states.get(From, {}).get("etapa")
 
-        if not estado:
-            if "consulta" in texto:
-                resposta = "Perfeito! Qual tratamento você deseja? (ex: limpeza, clareamento, aparelho)"
+        if estado is None:
+            if "consulta" in texto or "agendar" in texto:
                 user_states[From] = {"etapa": "tratamento"}
-            elif "valor" in texto or "preço" in texto:
-                resposta = "Claro! Sobre qual tratamento você deseja saber o valor?"
+                resposta = "Perfeito! Qual tratamento você deseja? Ex.: limpeza, clareamento ou aparelho."
+            elif "valor" in texto or "preço" in texto or "preco" in texto:
                 user_states[From] = {"etapa": "valor"}
+                resposta = "Claro! Sobre qual tratamento você deseja saber o valor?"
             else:
-                resposta = "Olá! Posso te ajudar com agendamento de consulta ou valores. Digite 'oi' para começar."
                 user_states[From] = {"etapa": "inicio"}
+                resposta = "Olá! 😊 Posso te ajudar com agendamento de consulta ou valores. Digite 'consulta' ou 'valor'."
 
-        elif estado.get("etapa") == "inicio":
-            if "consulta" in texto:
-                resposta = "Perfeito! Qual tratamento você deseja? (ex: limpeza, clareamento, aparelho)"
+        elif estado == "inicio":
+            if "consulta" in texto or "agendar" in texto:
                 user_states[From] = {"etapa": "tratamento"}
-            elif "valor" in texto or "preço" in texto:
-                resposta = "Claro! Sobre qual tratamento você deseja saber o valor?"
+                resposta = "Perfeito! Qual tratamento você deseja? Ex.: limpeza, clareamento ou aparelho."
+            elif "valor" in texto or "preço" in texto or "preco" in texto:
                 user_states[From] = {"etapa": "valor"}
+                resposta = "Claro! Sobre qual tratamento você deseja saber o valor?"
             else:
                 resposta = "Você deseja agendar uma consulta ou saber valores?"
 
-        elif estado.get("etapa") == "tratamento":
+        elif estado == "tratamento":
             user_states[From]["tratamento"] = texto
             user_states[From]["etapa"] = "dia"
             resposta = "Ótimo! Qual dia você prefere?"
 
-        elif estado.get("etapa") == "dia":
+        elif estado == "dia":
             user_states[From]["dia"] = texto
             user_states[From]["etapa"] = "nome"
             resposta = "Perfeito! Qual seu nome?"
 
-        elif estado.get("etapa") == "nome":
+        elif estado == "nome":
             nome = texto
-            tratamento = user_states[From].get("tratamento")
-            dia = user_states[From].get("dia")
+            tratamento = user_states[From].get("tratamento", "tratamento informado")
+            dia = user_states[From].get("dia", "dia informado")
 
             resposta = f"Perfeito, {nome}! 😊 Sua solicitação de {tratamento} para o dia {dia} foi registrada. Em breve entraremos em contato!"
             user_states.pop(From, None)
 
-        elif estado.get("etapa") == "valor":
+        elif estado == "valor":
             resposta = f"O valor do tratamento de {texto} pode variar. Podemos te passar mais detalhes. Deseja agendar uma avaliação?"
             user_states.pop(From, None)
 
         else:
-            resposta = "Não entendi muito bem. Digite 'oi' para recomeçar."
             user_states.pop(From, None)
+            resposta = "Não entendi muito bem. Digite 'oi' para recomeçar."
 
     twiml = MessagingResponse()
     twiml.message(resposta)
-
     return Response(content=str(twiml), media_type="application/xml")
