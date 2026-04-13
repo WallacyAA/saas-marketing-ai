@@ -33,6 +33,19 @@ def webhook_whatsapp(Body: str = Form(...), From: str = Form(...)):
         else:
             resposta = "Olá! Posso te ajudar com agendamento de consulta ou valores. O que você precisa?"
 
+    # RESPOSTA APÓS SAUDAÇÃO
+        elif estado.get("etapa") == "inicio":
+        if "consulta" in texto:
+            resposta = "Perfeito! Qual tratamento você deseja? (ex: limpeza, clareamento, aparelho)"
+            user_states[From] = {"etapa": "tratamento"}
+
+        elif "valor" in texto or "preço" in texto:
+            resposta = "Claro! Sobre qual tratamento você deseja saber o valor?"
+            user_states[From] = {"etapa": "valor"}
+
+        else:
+            resposta = "Você deseja agendar uma consulta ou saber valores?"
+
     # FLUXO DE TRATAMENTO
     elif estado.get("etapa") == "tratamento":
         user_states[From]["tratamento"] = texto
