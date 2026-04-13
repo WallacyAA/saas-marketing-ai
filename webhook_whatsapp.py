@@ -4,18 +4,62 @@ from twilio.twiml.messaging_response import MessagingResponse
 
 router = APIRouter()
 
+# memória simples (por número)
+user_states = {}
+
 @router.post("/webhook-whatsapp")
 def webhook_whatsapp(Body: str = Form(...), From: str = Form(...)):
-    texto = Body.strip().lower()
+    print(f"Mensagem de {From}: {Body}")
 
-    if "consulta" in texto:
-        resposta = "Olá! Podemos agendar sua consulta. Qual dia e horário você prefere?"
-    elif "preço" in texto or "valor" in texto:
-        resposta = "Posso te ajudar com os valores. Qual tratamento você deseja saber?"
-    elif "oi" in texto or "olá" in texto or "ola" in texto:
-        resposta = "Olá! Seja bem-vindo. Como posso te ajudar hoje?"
+    texto = Body.strip().lower()
+    estado = user_states.get(From, {})
+
+    resposta = ""
+
+    # INÍCIO DA CONVERSA
+    if not estado:
+        if "oi" in texto or "olá" in texto or "ola" in texto:
+            resposta = "Olá! 😊 Sou o assistente da clínica. Você deseja agendar uma consulta ou saber valores?"
+            user_states[From] = {"etapa": "inicio"}
+
+        elif "consulta" in texto:
+            resposta = "Perfeito! Qual tratamento você deseja? (ex: limpeza, clareamento, aparelho)"
+            user_states[From] = {"etapa": "tratamento"}
+
+        elif "valor" in texto or "preço" in texto:
+            resposta = "Claro! Sobre qual tratamento você deseja saber o valor?"
+            user_states[From] = {"etapa": "valor"}
+
+        else:
+            resposta = "Olá! Posso te ajudar com agendamento de consulta ou valores. O que você precisa?"
+
+    # FLUXO DE TRATAMENTO
+    elif estado.get("etapa") == "tratamento":
+        user_states[From]["tratamento"] = texto
+        user_states[From]["etapa"] = "dia"
+        resposta = "Ótimo! Qual dia você prefere?"
+
+    elif estado.get("etapa") == "dia":
+        user_states[From]["dia"] = texto
+        user_states[From]["etapa"] = "nome"
+        resposta = "Perfeito! Qual seu nome?"
+
+    elif estado.get("etapa") == "nome":
+        nome = texto
+        tratamento = user_states[From].get("tratamento")
+        dia = user_states[From].get("dia")
+
+        resposta = f"Perfeito, {nome}! 😊 Sua solicitação de {tratamento} para o dia {dia} foi registrada. Em breve entraremos em contato!"
+
+        user_states.pop(From)
+
+    # FLUXO DE VALORES
+    elif estado.get("etapa") == "valor":
+        resposta = f"O valor do tratamento de {texto} pode variar. Podemos te passar mais detalhes. Deseja agendar uma avaliação?"
+        user_states.pop(From)
+
     else:
-        resposta = "Recebi sua mensagem. Pode me explicar melhor o que você precisa?"
+        resposta = "Não entendi muito bem. Pode explicar melhor?"
 
     twiml = MessagingResponse()
     twiml.message(resposta)
