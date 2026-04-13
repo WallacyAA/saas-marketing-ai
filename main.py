@@ -5,6 +5,8 @@ from auth import router as auth_router
 from clinic import router as clinic_router
 from ai import router as ai_router
 from apscheduler.schedulers.background import BackgroundScheduler
+from whatsapp import router as whatsapp_router
+from webhook_whatsapp import router as webhook_whatsapp_router
 
 app = FastAPI()
 
@@ -13,6 +15,8 @@ Base.metadata.create_all(bind=engine)
 app.include_router(auth_router)
 app.include_router(clinic_router)
 app.include_router(ai_router)
+app.include_router(whatsapp_router)
+app.include_router(webhook_whatsapp_router)
 
 @app.get("/")
 def home():
