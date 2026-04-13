@@ -18,6 +18,8 @@ class Clinic(Base):
     owner_id = Column(Integer, ForeignKey("users.id"))
     whatsapp_number = Column(String, nullable=True)
     welcome_message = Column(String, nullable=True)
+    consult_message = Column(String, nullable=True)
+    price_message = Column(String, nullable=True)
 
     owner = relationship("User")
 

@@ -11,6 +11,8 @@ class ClinicCreate(BaseModel):
     owner_id: int
     whatsapp_number: str | None = None
     welcome_message: str | None = None
+    consult_message: str | None = None
+    price_message: str | None = None
 
 def get_db():
     db = SessionLocal()
@@ -25,7 +27,9 @@ def create_clinic(clinic: ClinicCreate, db: Session = Depends(get_db)):
         name=clinic.name,
         owner_id=clinic.owner_id,
         whatsapp_number=clinic.whatsapp_number,
-        welcome_message=clinic.welcome_message
+        welcome_message=clinic.welcome_message,
+        consult_message=clinic.consult_message,
+        price_message=clinic.price_message
     )
     db.add(new_clinic)
     db.commit()

@@ -16,9 +16,13 @@ def webhook_whatsapp(Body: str = Form(...), From: str = Form(...)):
     texto = Body.strip().lower()
     print(f"Mensagem recebida de {From}: {texto}")
 
+    welcome_message = clinic.welcome_message if clinic and clinic.welcome_message else "Olá! 😊 Como posso ajudar?"
+    consult_message = clinic.consult_message if clinic and clinic.consult_message else "Perfeito! Qual tratamento você deseja? Ex.: limpeza, clareamento ou aparelho."
+    price_message = clinic.price_message if clinic and clinic.price_message else "Claro! Sobre qual tratamento você deseja saber o valor?"
+
     if texto in ["oi", "olá", "ola", "menu", "inicio", "início", "começar", "comecar"]:
         user_states[From] = {"etapa": "inicio"}
-        resposta = clinic.welcome_message if clinic and clinic.welcome_message else "Olá! 😊 Como posso ajudar?"
+        resposta = welcome_message
 
     else:
         estado = user_states.get(From, {}).get("etapa")
@@ -26,21 +30,21 @@ def webhook_whatsapp(Body: str = Form(...), From: str = Form(...)):
         if estado is None:
             if "consulta" in texto or "agendar" in texto:
                 user_states[From] = {"etapa": "tratamento"}
-                resposta = "Perfeito! Qual tratamento você deseja? Ex.: limpeza, clareamento ou aparelho."
+                resposta = consult_message
             elif "valor" in texto or "preço" in texto or "preco" in texto:
                 user_states[From] = {"etapa": "valor"}
-                resposta = "Claro! Sobre qual tratamento você deseja saber o valor?"
+                resposta = price_message
             else:
                 user_states[From] = {"etapa": "inicio"}
-                resposta = clinic.welcome_message if clinic and clinic.welcome_message else "Olá! 😊 Posso te ajudar com agendamento de consulta ou valores. Digite 'consulta' ou 'valor'."
+                resposta = welcome_message
 
         elif estado == "inicio":
             if "consulta" in texto or "agendar" in texto:
                 user_states[From] = {"etapa": "tratamento"}
-                resposta = "Perfeito! Qual tratamento você deseja? Ex.: limpeza, clareamento ou aparelho."
+                resposta = consult_message
             elif "valor" in texto or "preço" in texto or "preco" in texto:
                 user_states[From] = {"etapa": "valor"}
-                resposta = "Claro! Sobre qual tratamento você deseja saber o valor?"
+                resposta = price_message
             else:
                 resposta = "Você deseja agendar uma consulta ou saber valores?"
 
