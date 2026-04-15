@@ -53,15 +53,3 @@ scheduler = BackgroundScheduler()
 def start_scheduler():
     scheduler.add_job(gerar_post_automatico, "interval", seconds=30)
     scheduler.start()
-
-    db.add(post)
-    db.commit()
-    db.close()
-
-
-scheduler = BackgroundScheduler()
-
-@app.on_event("startup")
-def start_scheduler():
-    scheduler.add_job(gerar_post_automatico, "interval", seconds=30)
-    scheduler.start()
