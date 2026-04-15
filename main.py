@@ -1,14 +1,23 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from database import engine, SessionLocal
 from models import Base, Post
 from auth import router as auth_router
 from clinic import router as clinic_router
 from ai import router as ai_router
-from apscheduler.schedulers.background import BackgroundScheduler
 from whatsapp import router as whatsapp_router
 from webhook_whatsapp import router as webhook_whatsapp_router
+from apscheduler.schedulers.background import BackgroundScheduler
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 Base.metadata.create_all(bind=engine)
 
@@ -32,6 +41,18 @@ def gerar_post_automatico():
         content="🦷 Dica diária automática: não esqueça de escovar os dentes!",
         clinic_id=1
     )
+
+    db.add(post)
+    db.commit()
+    db.close()
+
+
+scheduler = BackgroundScheduler()
+
+@app.on_event("startup")
+def start_scheduler():
+    scheduler.add_job(gerar_post_automatico, "interval", seconds=30)
+    scheduler.start()
 
     db.add(post)
     db.commit()
