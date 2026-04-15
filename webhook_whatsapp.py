@@ -20,33 +20,32 @@ def webhook_whatsapp(Body: str = Form(...), From: str = Form(...)):
     consult_message = clinic.consult_message if clinic and clinic.consult_message else "Perfeito! Qual tratamento você deseja? Ex.: limpeza, clareamento ou aparelho."
     price_message = clinic.price_message if clinic and clinic.price_message else "Claro! Sobre qual tratamento você deseja saber o valor?"
 
+    # COMANDOS GLOBAIS: funcionam em qualquer etapa
     if texto in ["oi", "olá", "ola", "menu", "inicio", "início", "começar", "comecar"]:
         user_states[From] = {"etapa": "inicio"}
         resposta = welcome_message
+
+    elif texto in ["cancelar", "sair", "parar"]:
+        user_states.pop(From, None)
+        resposta = "Tudo bem. Conversa reiniciada. Digite 'oi' para começar novamente."
+
+    elif "consulta" in texto or "agendar" in texto:
+        user_states[From] = {"etapa": "tratamento"}
+        resposta = consult_message
+
+    elif "valor" in texto or "preço" in texto or "preco" in texto:
+        user_states[From] = {"etapa": "valor"}
+        resposta = price_message
 
     else:
         estado = user_states.get(From, {}).get("etapa")
 
         if estado is None:
-            if "consulta" in texto or "agendar" in texto:
-                user_states[From] = {"etapa": "tratamento"}
-                resposta = consult_message
-            elif "valor" in texto or "preço" in texto or "preco" in texto:
-                user_states[From] = {"etapa": "valor"}
-                resposta = price_message
-            else:
-                user_states[From] = {"etapa": "inicio"}
-                resposta = welcome_message
+            user_states[From] = {"etapa": "inicio"}
+            resposta = welcome_message
 
         elif estado == "inicio":
-            if "consulta" in texto or "agendar" in texto:
-                user_states[From] = {"etapa": "tratamento"}
-                resposta = consult_message
-            elif "valor" in texto or "preço" in texto or "preco" in texto:
-                user_states[From] = {"etapa": "valor"}
-                resposta = price_message
-            else:
-                resposta = "Você deseja agendar uma consulta ou saber valores?"
+            resposta = "Você deseja agendar uma consulta ou saber valores?"
 
         elif estado == "tratamento":
             user_states[From]["tratamento"] = texto
