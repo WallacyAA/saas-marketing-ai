@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import engine, SessionLocal
@@ -85,7 +86,8 @@ Tema de hoje: {tema}
 
     post = Post(
         content=post_content,
-        clinic_id=1
+        clinic_id=1,
+        created_at=datetime.now().strftime("%d/%m/%Y %H:%M")
     )
 
     db.add(post)

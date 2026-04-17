@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import APIRouter
 from pydantic import BaseModel
 from database import SessionLocal
@@ -54,7 +55,11 @@ Tema de hoje: {data.topic}
 {random.choice(chamadas)}
 """
 
-        new_post = Post(content=post_content, clinic_id=1)
+        new_post = Post(
+            content=post_content,
+            clinic_id=1,
+            created_at=datetime.now().strftime("%d/%m/%Y %H:%M")
+        )
         db.add(new_post)
         db.commit()
 

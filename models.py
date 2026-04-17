@@ -30,3 +30,4 @@ class Post(Base):
     id = Column(Integer, primary_key=True, index=True)
     content = Column(String)
     clinic_id = Column(Integer, ForeignKey("clinics.id"))
+    created_at = Column(String)
